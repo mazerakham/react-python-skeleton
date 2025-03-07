@@ -1,0 +1,62 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+
+interface HelloResponse {
+  message: string;
+}
+
+function App() {
+  const [message, setMessage] = useState<string>('Loading...');
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchHello = async () => {
+      try {
+        const response = await axios.get<HelloResponse>('/api/hello');
+        setMessage(response.data.message);
+      } catch (err) {
+        console.error('Error fetching hello message:', err);
+        setError('Failed to fetch message from API');
+      }
+    };
+
+    fetchHello();
+  }, []);
+
+  return (
+    <div className="container">
+      <div className="header">
+        <h1>Welcome to {{APP_NAME}}</h1>
+        <p>A React + FastAPI application</p>
+      </div>
+
+      <div className="card">
+        <h2>Backend Connection Test</h2>
+        {error ? (
+          <div style={{ color: 'red' }}>
+            {error}
+            <p>
+              Make sure your backend server is running at http://localhost:8000
+            </p>
+          </div>
+        ) : (
+          <p>
+            <strong>Message from API:</strong> {message}
+          </p>
+        )}
+      </div>
+
+      <div className="card">
+        <h2>Getting Started</h2>
+        <p>
+          Edit <code>frontend/src/App.tsx</code> and save to reload the frontend.
+        </p>
+        <p>
+          Edit <code>backend/src/{{PYTHON_PACKAGE_NAME}}/app.py</code> to modify the API.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+export default App;
