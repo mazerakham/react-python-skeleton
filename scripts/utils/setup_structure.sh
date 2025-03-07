@@ -19,6 +19,8 @@ mkdir -p cline
 
 # Copy template files
 echo_info "Copying template files..."
+cp -r "$TEMPLATE_DIR/.gitignore" ./
+cp -r "$TEMPLATE_DIR/README.md" ./
 cp -r "$TEMPLATE_DIR/backend/pytest.ini" backend/
 cp -r "$TEMPLATE_DIR/backend/requirements.txt" backend/
 cp -r "$TEMPLATE_DIR/backend/setup.py" backend/

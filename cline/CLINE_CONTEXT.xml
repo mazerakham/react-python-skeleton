@@ -49,44 +49,13 @@
 
         I'm debugging the script now.  It's successfully
         creating the project and it's running and shows
-        up in the browser.  Only the API call is failing.
-        Figure out the issue(s).
+        up in the browser.  However on initial npm
+        install
 
-        <output>
-            [frontend] 
-[frontend] > react-skeleton-test-5-frontend@0.1.0 start
-[frontend] > react-scripts start
-[frontend] 
-[backend] INFO:     Will watch for changes in these directories: ['/Users/jakemirra/workspace/react-skeleton-test-5/backend']
-[backend] INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
-[backend] INFO:     Started reloader process [99866] using StatReload
-[backend] ERROR:    Error loading ASGI app. Could not import module "react_skeleton_test_5.app".
-[frontend] (node:99889) [DEP_WEBPACK_DEV_SERVER_ON_AFTER_SETUP_MIDDLEWARE] DeprecationWarning: 'onAfterSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
-[frontend] (Use `node --trace-deprecation ...` to show where the warning was created)
-[frontend] (node:99889) [DEP_WEBPACK_DEV_SERVER_ON_BEFORE_SETUP_MIDDLEWARE] DeprecationWarning: 'onBeforeSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
-[frontend] Starting the development server...
-[frontend] 
-[frontend] Compiled successfully!
-[frontend] 
-[frontend] You can now view react-skeleton-test-5-frontend in the browser.
-[frontend] 
-[frontend]   Local:            http://localhost:3000
-[frontend]   On Your Network:  http://10.0.78.11:3000
-[frontend] 
-[frontend] Note that the development build is not optimized.
-[frontend] To create a production build, use npm run build.
-[frontend] 
-[frontend] webpack compiled successfully
-[frontend] No issues found.
-[frontend] (node:99889) [DEP0060] DeprecationWarning: The `util._extend` API is deprecated. Please use Object.assign() instead.
-[frontend] Proxy error: Could not proxy request /api/hello from localhost:3000 to http://localhost:8000.
-[frontend] See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
-[frontend] 
-[frontend] Proxy error: Could not proxy request /favicon.ico from localhost:3000 to http://localhost:8000.
-[frontend] See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
-[frontend] 
-[frontend] Proxy error: Could not proxy request /api/hello from localhost:3000 to http://localhost:8000.
-[frontend] See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
-        </output>
+        gitignore is not currently added to new projects.  Ensure
+        that it is, if the user chose to init git in the setup.
+
+        Ensure no other important files from ./scripts/template are
+        lost.
     </current-task>
 </cline-context>
