@@ -16,7 +16,7 @@ A project template for creating web applications with a React frontend and Pytho
 
 - Node.js (v16+)
 - npm or yarn
-- Python (v3.8+)
+- Python (v3.8+) - The script will try to use `python3` first, then fall back to `python`
 - pip
 
 ### Creating a New Project

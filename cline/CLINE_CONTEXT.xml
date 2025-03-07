@@ -13,8 +13,7 @@
             under the hood and how python scripts are supposed to be run. Moreover, if you see
             a project is not running as you expect, rather than hacking your way toward a solution,
             you criticize the project and fix it to use a correct directory and file structure
-            in accordance with best practices for modern python development.  In particular
-            use pyproject.toml rather than setup.py.
+            in accordance with best practices for modern python development.
         </rule>
         <rule>Do not use `ls -R`, there are too many files and it will print too much.</rule>
         <rule>Use `pyright src` to check compiler errors and `pytest` to run unit tests after every
@@ -44,5 +43,50 @@
     </long-term-memory>
     
     <current-task>
+        Read ./README.sh and ./scripts/init-project.sh to learn
+        what I'm up to - making a project quick-start script that 
+        creates a React + Python project skeleton for the user.
+
+        I'm debugging the script now.  It's successfully
+        creating the project and it's running and shows
+        up in the browser.  Only the API call is failing.
+        Figure out the issue(s).
+
+        <output>
+            [frontend] 
+[frontend] > react-skeleton-test-5-frontend@0.1.0 start
+[frontend] > react-scripts start
+[frontend] 
+[backend] INFO:     Will watch for changes in these directories: ['/Users/jakemirra/workspace/react-skeleton-test-5/backend']
+[backend] INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+[backend] INFO:     Started reloader process [99866] using StatReload
+[backend] ERROR:    Error loading ASGI app. Could not import module "react_skeleton_test_5.app".
+[frontend] (node:99889) [DEP_WEBPACK_DEV_SERVER_ON_AFTER_SETUP_MIDDLEWARE] DeprecationWarning: 'onAfterSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+[frontend] (Use `node --trace-deprecation ...` to show where the warning was created)
+[frontend] (node:99889) [DEP_WEBPACK_DEV_SERVER_ON_BEFORE_SETUP_MIDDLEWARE] DeprecationWarning: 'onBeforeSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+[frontend] Starting the development server...
+[frontend] 
+[frontend] Compiled successfully!
+[frontend] 
+[frontend] You can now view react-skeleton-test-5-frontend in the browser.
+[frontend] 
+[frontend]   Local:            http://localhost:3000
+[frontend]   On Your Network:  http://10.0.78.11:3000
+[frontend] 
+[frontend] Note that the development build is not optimized.
+[frontend] To create a production build, use npm run build.
+[frontend] 
+[frontend] webpack compiled successfully
+[frontend] No issues found.
+[frontend] (node:99889) [DEP0060] DeprecationWarning: The `util._extend` API is deprecated. Please use Object.assign() instead.
+[frontend] Proxy error: Could not proxy request /api/hello from localhost:3000 to http://localhost:8000.
+[frontend] See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+[frontend] 
+[frontend] Proxy error: Could not proxy request /favicon.ico from localhost:3000 to http://localhost:8000.
+[frontend] See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+[frontend] 
+[frontend] Proxy error: Could not proxy request /api/hello from localhost:3000 to http://localhost:8000.
+[frontend] See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+        </output>
     </current-task>
 </cline-context>

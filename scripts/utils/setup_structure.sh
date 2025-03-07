@@ -18,7 +18,11 @@ mkdir -p scripts
 
 # Copy template files
 echo_info "Copying template files..."
-cp -r "$TEMPLATE_DIR/backend/"* backend/
+cp -r "$TEMPLATE_DIR/backend/pytest.ini" backend/
+cp -r "$TEMPLATE_DIR/backend/requirements.txt" backend/
+cp -r "$TEMPLATE_DIR/backend/setup.py" backend/
+cp -r "$TEMPLATE_DIR/backend/src/{{PYTHON_PACKAGE_NAME}}/"* backend/src/$PYTHON_PACKAGE_NAME/
+cp -r "$TEMPLATE_DIR/backend/test/"* backend/test/
 cp -r "$TEMPLATE_DIR/frontend/"* frontend/
 cp -r "$TEMPLATE_DIR/scripts/"* scripts/
 

@@ -40,7 +40,7 @@ fi
 if [ ! -d "$PROJECT_ROOT/frontend/node_modules" ]; then
   echo_colored "yellow" "Installing frontend dependencies..."
   cd "$PROJECT_ROOT/frontend"
-  npm install
+  npm install --legacy-peer-deps
   cd "$PROJECT_ROOT"
 fi
 
