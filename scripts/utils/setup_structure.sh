@@ -15,6 +15,7 @@ mkdir -p backend/src/$PYTHON_PACKAGE_NAME
 mkdir -p backend/test
 mkdir -p frontend/src
 mkdir -p scripts
+mkdir -p cline
 
 # Copy template files
 echo_info "Copying template files..."
@@ -25,6 +26,7 @@ cp -r "$TEMPLATE_DIR/backend/src/{{PYTHON_PACKAGE_NAME}}/"* backend/src/$PYTHON_
 cp -r "$TEMPLATE_DIR/backend/test/"* backend/test/
 cp -r "$TEMPLATE_DIR/frontend/"* frontend/
 cp -r "$TEMPLATE_DIR/scripts/"* scripts/
+cp -r "$TEMPLATE_DIR/cline/"* cline/
 
 # Replace placeholders in template files
 echo_info "Configuring project files..."
