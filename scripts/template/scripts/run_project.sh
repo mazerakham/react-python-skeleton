@@ -44,6 +44,17 @@ if [ ! -d "$PROJECT_ROOT/frontend/node_modules" ]; then
   cd "$PROJECT_ROOT"
 fi
 
+# Ensure types directory exists
+mkdir -p "$PROJECT_ROOT/frontend/src/types"
+
+# Generate TypeScript types if they don't exist
+if [ ! -f "$PROJECT_ROOT/frontend/src/types/apiTypes.ts" ]; then
+  echo_colored "yellow" "Generating TypeScript types from Pydantic models..."
+  cd "$PROJECT_ROOT/frontend"
+  npm run generate-types || echo_colored "yellow" "Type generation skipped. Run manually with 'npm run generate-types' after setup."
+  cd "$PROJECT_ROOT"
+fi
+
 echo_colored "green" "Starting {{APP_NAME}} application..."
 
 # Run both backend and frontend using concurrently

@@ -47,15 +47,10 @@
         what I'm up to - making a project quick-start script that 
         creates a React + Python project skeleton for the user.
 
-        I'm debugging the script now.  It's successfully
-        creating the project and it's running and shows
-        up in the browser.  However on initial npm
-        install
-
-        gitignore is not currently added to new projects.  Ensure
-        that it is, if the user chose to init git in the setup.
-
-        Ensure no other important files from ./scripts/template are
-        lost.
+        The example project, I believe, has automatic typescript
+        type generation based on the API controllers.  Please
+        investigate how this works and ensure that the generated
+        project has instructions in its README for generating 
+        types in the same way.
     </current-task>
 </cline-context>

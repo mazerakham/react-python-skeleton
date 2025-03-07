@@ -1,9 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-
-interface HelloResponse {
-  message: string;
-}
+import { apiClient } from './api/client';
 
 function App() {
   const [message, setMessage] = useState<string>('Loading...');
@@ -12,8 +8,8 @@ function App() {
   useEffect(() => {
     const fetchHello = async () => {
       try {
-        const response = await axios.get<HelloResponse>('/api/hello');
-        setMessage(response.data.message);
+        const response = await apiClient.getHello();
+        setMessage(response.message);
       } catch (err) {
         console.error('Error fetching hello message:', err);
         setError('Failed to fetch message from API');
@@ -53,6 +49,9 @@ function App() {
         </p>
         <p>
           Edit <code>backend/src/{{PYTHON_PACKAGE_NAME}}/app.py</code> to modify the API.
+        </p>
+        <p>
+          Run <code>npm run generate-types</code> to update TypeScript types from Pydantic models.
         </p>
       </div>
     </div>

@@ -18,7 +18,8 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "generate-types": "cd ../backend && pydantic2ts --module {{PYTHON_PACKAGE_NAME}}.models --output ../frontend/src/types/apiTypes.ts"
   },
   "eslintConfig": {
     "extends": [

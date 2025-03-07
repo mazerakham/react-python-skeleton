@@ -16,6 +16,7 @@ mkdir -p backend/test
 mkdir -p frontend/src
 mkdir -p scripts
 mkdir -p cline
+mkdir -p .vscode
 
 # Copy template files
 echo_info "Copying template files..."
@@ -29,6 +30,7 @@ cp -r "$TEMPLATE_DIR/backend/test/"* backend/test/
 cp -r "$TEMPLATE_DIR/frontend/"* frontend/
 cp -r "$TEMPLATE_DIR/scripts/"* scripts/
 cp -r "$TEMPLATE_DIR/cline/"* cline/
+cp -r "$TEMPLATE_DIR/.vscode/"* .vscode/
 
 # Replace placeholders in template files
 echo_info "Configuring project files..."

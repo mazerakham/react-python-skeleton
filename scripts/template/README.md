@@ -75,6 +75,33 @@ npm start
 - Edit `frontend/src/App.tsx` to modify the React frontend
 - Edit `backend/src/{{PYTHON_PACKAGE_NAME}}/app.py` to modify the FastAPI backend
 
+### TypeScript Type Generation
+
+This project supports automatic TypeScript type generation from Python Pydantic models. This ensures type safety and consistency between your frontend and backend.
+
+To generate TypeScript types from your Pydantic models:
+
+```bash
+cd frontend
+npm run generate-types
+```
+
+This will create TypeScript interfaces in `frontend/src/types/apiTypes.ts` based on the Pydantic models defined in `backend/src/{{PYTHON_PACKAGE_NAME}}/models.py`.
+
+An example of the generated TypeScript interfaces is provided in `frontend/src/types/apiTypes.ts.example`.
+
+Usage example:
+
+```typescript
+import { ExampleRequest, ExampleResponse } from './types/apiTypes';
+
+// Now you have type-safe API interactions
+const submitForm = async (data: ExampleRequest): Promise<ExampleResponse> => {
+  const response = await axios.post<ExampleResponse>('/api/example', data);
+  return response.data;
+};
+```
+
 ## Testing
 
 **Backend Tests:**
