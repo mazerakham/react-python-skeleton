@@ -22,7 +22,14 @@ echo_colored() {
 if [ ! -d "$PROJECT_ROOT/backend/venv" ]; then
   echo_colored "yellow" "Setting up Python virtual environment..."
   cd "$PROJECT_ROOT/backend"
-  python -m venv venv
+  
+  # Try python3 first, then fall back to python if python3 is not available
+  if command -v python3 &> /dev/null; then
+    python3 -m venv venv
+  else
+    python -m venv venv
+  fi
+  
   source venv/bin/activate
   pip install -e .
   pip install -r requirements.txt
