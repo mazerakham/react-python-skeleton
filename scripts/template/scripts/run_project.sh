@@ -18,28 +18,33 @@ echo_colored() {
   esac
 }
 
-# Check if tmux is installed
-if ! command -v tmux &> /dev/null; then
-  echo_colored "red" "tmux is not installed. Please install it to run this script."
-  echo "On macOS: brew install tmux"
-  echo "On Ubuntu: sudo apt-get install tmux"
-  exit 1
+# Setup Python environment if it doesn't exist
+if [ ! -d "$PROJECT_ROOT/backend/venv" ]; then
+  echo_colored "yellow" "Setting up Python virtual environment..."
+  cd "$PROJECT_ROOT/backend"
+  python -m venv venv
+  source venv/bin/activate
+  pip install -e .
+  pip install -r requirements.txt
+  cd "$PROJECT_ROOT"
 fi
 
-# Create a new tmux session
-SESSION_NAME="{{APP_NAME}}"
-tmux new-session -d -s "$SESSION_NAME"
+# Install frontend dependencies if node_modules doesn't exist
+if [ ! -d "$PROJECT_ROOT/frontend/node_modules" ]; then
+  echo_colored "yellow" "Installing frontend dependencies..."
+  cd "$PROJECT_ROOT/frontend"
+  npm install
+  cd "$PROJECT_ROOT"
+fi
 
-# Split the window horizontally
-tmux split-window -h -t "$SESSION_NAME"
-
-# Run backend in the left pane
-tmux send-keys -t "$SESSION_NAME:0.0" "cd $PROJECT_ROOT/backend && uvicorn {{PYTHON_PACKAGE_NAME}}.app:app --reload" C-m
-
-# Run frontend in the right pane
-tmux send-keys -t "$SESSION_NAME:0.1" "cd $PROJECT_ROOT/frontend && npm start" C-m
-
-# Attach to the session
 echo_colored "green" "Starting {{APP_NAME}} application..."
-echo_colored "yellow" "Press Ctrl+B then D to detach from tmux session without stopping the servers."
-tmux attach-session -t "$SESSION_NAME"
+
+# Run both backend and frontend using concurrently
+cd "$PROJECT_ROOT/frontend"
+./node_modules/.bin/concurrently \
+  --kill-others \
+  --prefix "[{name}]" \
+  --names "backend,frontend" \
+  --prefix-colors "yellow.bold,cyan.bold" \
+  "cd $PROJECT_ROOT/backend && source venv/bin/activate && uvicorn {{PYTHON_PACKAGE_NAME}}.app:app --reload" \
+  "npm start"
