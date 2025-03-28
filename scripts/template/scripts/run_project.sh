@@ -18,31 +18,33 @@ echo_colored() {
   esac
 }
 
-# Setup Python environment if it doesn't exist
-if [ ! -d "$PROJECT_ROOT/backend/venv" ]; then
-  echo_colored "yellow" "Setting up Python virtual environment..."
+# Ensure Poetry is installed
+if ! command -v poetry &> /dev/null; then
+  # Run the poetry installation script
+  source "$PROJECT_ROOT/scripts/install_poetry.sh"
+  
+  # Add Poetry to PATH for this session
+  export PATH="$HOME/.local/bin:$PATH"
+fi
+
+# Setup Python environment with Poetry
+if [ ! -d "$PROJECT_ROOT/backend/.venv" ]; then
+  echo_colored "yellow" "Setting up Python virtual environment with Poetry..."
   cd "$PROJECT_ROOT/backend"
   
-  # Try python3 first, then fall back to python if python3 is not available
-  if command -v python3 &> /dev/null; then
-    python3 -m venv venv
-  else
-    python -m venv venv
-  fi
+  # Configure Poetry to create virtual environment in project directory
+  poetry config virtualenvs.in-project true --local
   
-  source venv/bin/activate
-  pip install -e .
-  pip install -r requirements.txt
+  # Install dependencies
+  poetry install
   cd "$PROJECT_ROOT"
 fi
 
-# Install frontend dependencies if node_modules doesn't exist
-if [ ! -d "$PROJECT_ROOT/frontend/node_modules" ]; then
-  echo_colored "yellow" "Installing frontend dependencies..."
-  cd "$PROJECT_ROOT/frontend"
-  npm install --legacy-peer-deps
-  cd "$PROJECT_ROOT"
-fi
+# Install frontend dependencies
+echo_colored "yellow" "Installing frontend dependencies..."
+cd "$PROJECT_ROOT/frontend"
+npm install --legacy-peer-deps
+cd "$PROJECT_ROOT"
 
 # Ensure types directory exists
 mkdir -p "$PROJECT_ROOT/frontend/src/types"
@@ -55,7 +57,38 @@ if [ ! -f "$PROJECT_ROOT/frontend/src/types/apiTypes.ts" ]; then
   cd "$PROJECT_ROOT"
 fi
 
+# Check if TypeScript types exist
+if [ ! -f "$PROJECT_ROOT/frontend/src/types/apiTypes.ts" ]; then
+  echo_colored "red" "ERROR: TypeScript type definitions file not found!"
+  echo_colored "yellow" "You need to generate TypeScript types before running the application."
+  echo_colored "yellow" "Run the following command to generate types:"
+  echo_colored "blue" "cd $PROJECT_ROOT/frontend && npm run generate-types"
+  echo_colored "yellow" "Remember to run this command whenever you make changes to the API models."
+  exit 1
+fi
+
 echo_colored "green" "Starting {{APP_NAME}} application..."
+
+# Check if concurrently is available
+if [ ! -f "$PROJECT_ROOT/frontend/node_modules/.bin/concurrently" ]; then
+  echo_colored "red" "ERROR: concurrently not found in node_modules."
+  echo_colored "yellow" "Make sure frontend dependencies are installed correctly."
+  echo_colored "blue" "Try running: cd $PROJECT_ROOT/frontend && npm install"
+  exit 1
+fi
+
+# Check if port 8000 is already in use
+BACKEND_PORT=8000
+if command -v lsof &> /dev/null; then
+  if lsof -i :$BACKEND_PORT -t &> /dev/null; then
+    echo_colored "red" "ERROR: Port $BACKEND_PORT is already in use."
+    echo_colored "yellow" "Another process is already using the default backend port."
+    echo_colored "blue" "You can find and kill the process with:"
+    echo_colored "blue" "  lsof -i :$BACKEND_PORT"
+    echo_colored "blue" "  kill -9 \$(lsof -t -i :$BACKEND_PORT)"
+    exit 1
+  fi
+fi
 
 # Run both backend and frontend using concurrently
 cd "$PROJECT_ROOT/frontend"
@@ -64,5 +97,5 @@ cd "$PROJECT_ROOT/frontend"
   --prefix "[{name}]" \
   --names "backend,frontend" \
   --prefix-colors "yellow.bold,cyan.bold" \
-  "cd $PROJECT_ROOT/backend && source venv/bin/activate && uvicorn {{PYTHON_PACKAGE_NAME}}.app:app --reload" \
+  "cd $PROJECT_ROOT/backend && poetry run uvicorn {{PYTHON_PACKAGE_NAME}}.app:app --reload" \
   "npm start"

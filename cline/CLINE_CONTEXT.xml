@@ -47,10 +47,18 @@
         what I'm up to - making a project quick-start script that 
         creates a React + Python project skeleton for the user.
 
-        The example project, I believe, has automatic typescript
-        type generation based on the API controllers.  Please
-        investigate how this works and ensure that the generated
-        project has instructions in its README for generating 
-        types in the same way.
+        This script generated a project which DID NOT work.  
+        There were issues with poetry.  I had to make significant
+        changes to that generated project to get it to run. 
+
+        Please review cline/poetry_changes.txt,
+        
+        then write cline/summary_of_poetry_changes.md
+
+        which demonstrates your understanding of those changes
+        and why they were needed; then rewrite
+        the init-project script (and its dependencies) so that
+        future projects created by this script are created in a
+        correct state. 
     </current-task>
 </cline-context>

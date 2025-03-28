@@ -1,0 +1,1104 @@
+diff --git a/.gitignore b/.gitignore
+index a08db83..dcf1254 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -4,7 +4,6 @@ __pycache__/
+ *$py.class
+ *.so
+ .Python
+-env/
+ build/
+ develop-eggs/
+ dist/
+@@ -16,36 +15,52 @@ lib64/
+ parts/
+ sdist/
+ var/
++wheels/
+ *.egg-info/
+ .installed.cfg
+ *.egg
+-.pytest_cache/
+-.coverage
+-htmlcov/
+-.tox/
+-.nox/
+-.hypothesis/
+-.venv/
+-venv/
+ 
+-# Node
++# Poetry and Virtual Environments
++backend/venv/
++backend/venv/bin/
++backend/venv/bin/*
++backend/poetry.lock
++
++# Node.js
+ node_modules/
+ npm-debug.log
+ yarn-debug.log
+ yarn-error.log
+-.pnpm-debug.log
++
++# React
++frontend/build/
++frontend/coverage/
++
++# TypeScript
++*.tsbuildinfo
++
++# Environment variables
++.env
+ .env.local
+ .env.development.local
+ .env.test.local
+ .env.production.local
+ 
+-# Build
+-/frontend/build/
+-/frontend/dist/
+-
+ # IDE
+ .idea/
+-.vscode/
+-*.swp
+-*.swo
++.vscode/*
++!.vscode/settings.json
++!.vscode/tasks.json
++!.vscode/launch.json
++!.vscode/extensions.json
++*.code-workspace
++.history/
++
++# OS
+ .DS_Store
++.DS_Store?
++._*
++.Spotlight-V100
++.Trashes
++ehthumbs.db
++Thumbs.db
+diff --git a/.vscode/settings.json b/.vscode/settings.json
+new file mode 100644
+index 0000000..2e27aaf
+--- /dev/null
++++ b/.vscode/settings.json
+@@ -0,0 +1,8 @@
++{
++  "python.analysis.extraPaths": ["backend/src"],
++  "python.testing.pytestArgs": ["backend/tests"],
++  "python.testing.unittestEnabled": false,
++  "python.testing.pytestEnabled": true,
++  "python.terminal.activateEnvironment": true,
++  "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/bin/python"
++}
+diff --git a/backend/poetry.toml b/backend/poetry.toml
+new file mode 100644
+index 0000000..ab1033b
+--- /dev/null
++++ b/backend/poetry.toml
+@@ -0,0 +1,2 @@
++[virtualenvs]
++in-project = true
+diff --git a/backend/pyproject.toml b/backend/pyproject.toml
+new file mode 100644
+index 0000000..e08fbfc
+--- /dev/null
++++ b/backend/pyproject.toml
+@@ -0,0 +1,31 @@
++[tool.poetry]
++name = "budget"
++version = "0.1.0"
++description = "Budget application backend"
++authors = ["Your Name <your.email@example.com>"]
++packages = [{include = "budget", from = "src"}]
++
++[tool.poetry.dependencies]
++python = "^3.9"
++fastapi = "^0.104.0"
++uvicorn = "^0.23.2"
++pydantic = "^2.4.2"
++
++[tool.poetry.group.dev.dependencies]
++pytest = "^7.4.0"
++pyright = "^1.1.330"
++
++[tool.poetry.group.tools.dependencies]
++pydantic2-to-typescript = {version = "^0.0.1", extras = ["cli"]}
++
++[build-system]
++requires = ["poetry-core>=1.0.0", "setuptools<=66.1.1"]  # Force compatible setuptools
++build-backend = "poetry.core.masonry.api"
++
++[tool.pytest.ini_options]
++testpaths = ["tests"]
++
++[tool.pyright]
++include = ["src"]
++exclude = ["**/__pycache__"]
++typeCheckingMode = "basic"
+diff --git a/backend/scripts/debug_imports.py b/backend/scripts/debug_imports.py
+new file mode 100644
+index 0000000..52250c4
+--- /dev/null
++++ b/backend/scripts/debug_imports.py
+@@ -0,0 +1,38 @@
++#!/usr/bin/env python
++"""
++Debug script to check module imports and paths.
++"""
++
++import sys
++import importlib.util
++import os
++
++print("Python path:")
++for path in sys.path:
++    print(f"  {path}")
++
++print("\nAttempting to find pydantic2ts module:")
++try:
++    import pydantic2ts
++    print(f"Module found at: {pydantic2ts.__file__}")
++except ImportError as e:
++    print(f"Import error: {e}")
++
++print("\nChecking for the module file directly:")
++for path in sys.path:
++    module_path = os.path.join(path, "pydantic2ts")
++    if os.path.exists(module_path):
++        print(f"Found at: {module_path}")
++        if os.path.isdir(module_path):
++            print("  (It's a directory)")
++            init_file = os.path.join(module_path, "__init__.py")
++            if os.path.exists(init_file):
++                print(f"  __init__.py exists: {init_file}")
++            else:
++                print("  __init__.py does not exist")
++        else:
++            print("  (It's a file)")
++    
++    module_path_py = os.path.join(path, "pydantic2ts.py")
++    if os.path.exists(module_path_py):
++        print(f"Found at: {module_path_py}")
+diff --git a/backend/scripts/validate_types.py b/backend/scripts/validate_types.py
+new file mode 100755
+index 0000000..0d438f7
+--- /dev/null
++++ b/backend/scripts/validate_types.py
+@@ -0,0 +1,40 @@
++#!/usr/bin/env python
++"""
++Validation script for TypeScript type generation from Pydantic models.
++This script tests the pydantic2-to-typescript package functionality.
++"""
++
++from pydantic2ts import generate_typescript_defs
++import os
++import sys
++
++# Add the src directory to the Python path
++sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
++
++try:
++    # Import the models module
++    from budget import models
++    
++    # Output path for the TypeScript types
++    output_path = os.path.abspath(os.path.join(
++        os.path.dirname(__file__), 
++        "../../frontend/src/types/apiTypes.ts"
++    ))
++    
++    print(f"Generating TypeScript types from {models.__name__}")
++    print(f"Output path: {output_path}")
++    
++    # Generate the TypeScript types
++    generate_typescript_defs(models.__name__, output_path)
++    
++    print("TypeScript types generated successfully!")
++    
++except ImportError as e:
++    print(f"Error importing module: {e}")
++    print("Python path:")
++    for path in sys.path:
++        print(f"  {path}")
++    sys.exit(1)
++except Exception as e:
++    print(f"Error generating TypeScript types: {e}")
++    sys.exit(1)
+diff --git a/backend/tests/__init__.py b/backend/tests/__init__.py
+new file mode 100644
+index 0000000..91f15a7
+--- /dev/null
++++ b/backend/tests/__init__.py
+@@ -0,0 +1 @@
++"""Test package for the budget application."""
+diff --git a/backend/tests/test_app.py b/backend/tests/test_app.py
+new file mode 100644
+index 0000000..39725e4
+--- /dev/null
++++ b/backend/tests/test_app.py
+@@ -0,0 +1,12 @@
++from fastapi.testclient import TestClient
++from budget.app import app
++
++client = TestClient(app)
++
++
++def test_hello_endpoint() -> None:
++    response = client.get("/api/hello")
++    assert response.status_code == 200
++    data = response.json()
++    assert "message" in data
++    assert data["message"] == "Hello from budget API!"
+diff --git a/cline/CLINE_CONTEXT.xml b/cline/CLINE_CONTEXT.xml
+index 939d9b2..a0161be 100644
+--- a/cline/CLINE_CONTEXT.xml
++++ b/cline/CLINE_CONTEXT.xml
+@@ -42,7 +42,65 @@
+ 
+     <long-term-memory>
+     </long-term-memory>
+-    
+     <current-task>
++        Troubleshoot the output below.  First read
++
++        cline/pydantic2s_fix_rec_2.md
++
++        which has a recommendation on how to fix the issue.
++
++        <output>
++        (venv) ➜  budget git:(mazerakham/init-fixes) ✗ ./scripts/run_project.sh                                                    
++Attempting to install Poetry...
++Detected macOS system. Checking for SSL certificates...
++Retrieving Poetry metadata
++
++The latest version (2.1.1) is already installed.
++Poetry installed successfully!
++Setting up Python virtual environment with Poetry...
++Installing dependencies from lock file
++
++No dependencies to install or update
++
++Installing the current project: budget (0.1.0)
++ERROR: TypeScript type definitions file not found!
++You need to generate TypeScript types before running the application.
++Run the following command to generate types:
++cd /Users/jakemirra/workspace/budget && ./frontend/scripts/generate_types.sh
++or
++cd /Users/jakemirra/workspace/budget/frontend && npm run generate-types
++Remember to run this command whenever you make changes to the API models.
++(venv) ➜  budget git:(mazerakham/init-fixes) ✗ cd /Users/jakemirra/workspace/budget/frontend && npm run generate-types
++
++> budget-frontend@0.1.0 generate-types
++> ./scripts/generate_types.sh
++
++Attempting to install Poetry...
++Detected macOS system. Checking for SSL certificates...
++Retrieving Poetry metadata
++
++The latest version (2.1.1) is already installed.
++Poetry installed successfully!
++ERROR: Pipe to stdout was broken
++
++[notice] A new release of pip is available: 23.2.1 -> 25.0.1
++[notice] To update, run: pip install --upgrade pip
++Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='utf-8'>
++BrokenPipeError: [Errno 32] Broken pipe
++ERROR: Pipe to stdout was broken
++
++[notice] A new release of pip is available: 23.2.1 -> 25.0.1
++[notice] To update, run: pip install --upgrade pip
++Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='utf-8'>
++BrokenPipeError: [Errno 32] Broken pipe
++Generating TypeScript types from Pydantic models...
++Traceback (most recent call last):
++  File "<string>", line 1, in <module>
++ModuleNotFoundError: No module named 'pydantic2_to_typescript'
++Failed to generate TypeScript types.
++This could be due to missing dependencies or configuration issues.
++Please check that json-schema-to-typescript is installed globally:
++npm install -g json-schema-to-typescript
++        </output>
+     </current-task>
+ </cline-context>
+diff --git a/cline/poetry_installation_instructions.md b/cline/poetry_installation_instructions.md
+new file mode 100644
+index 0000000..53bb1c5
+--- /dev/null
++++ b/cline/poetry_installation_instructions.md
+@@ -0,0 +1,55 @@
++The error message you're encountering—`ssl.SSLCertVerificationError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate`—suggests that your Python environment is unable to verify SSL certificates when attempting to install Poetry. This issue is common on macOS systems and can be resolved by ensuring that your Python installation has access to the necessary SSL certificates.
++
++**Solution for macOS: Install Certificates**
++
++When Python is installed on macOS, it includes a script to install the necessary SSL certificates. Here's how to run it:
++
++1. **Locate the "Install Certificates.command" Script:**
++   - Open Finder.
++   - Navigate to the Python directory, typically found in `/Applications/Python 3.x/` (replace `3.x` with your Python version).
++   - Inside this directory, you'll find the `Install Certificates.command` file.
++
++2. **Execute the Script:**
++   - Double-click on `Install Certificates.command` to run it. This action will install the necessary SSL certificates for your Python environment.
++
++After completing these steps, try installing Poetry again using the recommended installation command:
++
++
++```bash
++curl -sSL https://install.python-poetry.org | python3 -
++```
++
++
++This approach has been effective for many users experiencing similar SSL certificate verification issues on macOS. citeturn0search0
++
++**Alternative Solution: Install `certifi` Package**
++
++If the above method doesn't resolve the issue, you can manually install the `certifi` package, which provides an up-to-date bundle of CA certificates:
++
++1. **Install `certifi`:**
++   - Open Terminal.
++   - Run the following command to install `certifi` using pip:
++
++     ```bash
++     pip install certifi
++     ```
++
++2. **Configure Python to Use `certifi` Certificates:**
++   - In your Python scripts or interactive sessions, you can specify the path to the `certifi` certificate bundle:
++
++     ```python
++     import ssl
++     import certifi
++
++     ssl_context = ssl.create_default_context(cafile=certifi.where())
++     ```
++
++This method ensures that Python uses the `certifi` certificate bundle for SSL connections. citeturn0search9
++
++**Additional Considerations**
++
++- **Network Environment:** If you're operating within a corporate network or behind a proxy, there might be custom SSL certificates or intercepting proxies causing SSL verification issues. In such cases, consult your organization's IT department for guidance on configuring your environment appropriately.
++
++- **Python Version:** Ensure you're using a compatible Python version with Poetry. As of March 2025, Python 3.11 or later is recommended.
++
++By following these steps, you should be able to resolve the SSL certificate verification error and successfully install Poetry in your macOS environment. 
+\ No newline at end of file
+diff --git a/cline/pydantic2s_fix_rec.md b/cline/pydantic2s_fix_rec.md
+new file mode 100644
+index 0000000..aa1fedf
+--- /dev/null
++++ b/cline/pydantic2s_fix_rec.md
+@@ -0,0 +1,82 @@
++The error occurs because there are two similarly named but distinct packages, and the correct installation approach depends on which one you need. Here's how to resolve this:
++
++## Package Clarification
++1. **pydantic-to-typescript** (PyPI):
++   - Original package for Pydantic v1/v2 compatibility
++   - Install with: `poetry add pydantic-to-typescript`
++   - Requires `json2ts` (install via npm: `npm install -g json-schema-to-typescript`)[3]
++
++2. **pydantic2-to-typescript** (PyPI):
++   - Newer package specifically for Pydantic v2
++   - Install with: `poetry add pydantic2-to-typescript`
++   - Added May 2024[2]
++
++## Solution Steps
++
++**1. Fix Dependency Declaration**
++```toml
++# pyproject.toml (correct format)
++[tool.poetry.dependencies]
++python = "^3.9"
++pydantic2-to-typescript = "^0.0.1"  # For Pydantic v2 projects [2]
++# OR
++pydantic-to-typescript = "^1.0.4"   # For older Pydantic versions [4]
++```
++
++**2. Install System Dependencies**
++```bash
++# Required for both packages
++npm install -g json-schema-to-typescript
++```
++
++**3. Reinstall with Poetry**
++```bash
++# Clean existing environment
++poetry cache clear --all pydantic2-to-typescript
++poetry cache clear --all pydantic-to-typescript
++
++# Install correct package
++poetry add pydantic2-to-typescript  # or pydantic-to-typescript
++```
++
++## Common Issues Check
++1. **Python Version Compatibility**:
++   - Ensure Python ≥3.9 (as per your setup)
++   - Verify with `poetry env info`
++
++2. **Lock File Conflicts**:
++   ```bash
++   poetry lock --no-update
++   poetry install --sync
++   ```
++
++3. **Platform-Specific Builds**:
++   ```bash
++   # If Cython compilation issues occur
++   SKIP_CYTHON=1 poetry install --no-cache
++   ```
++
++## Post-Install Verification
++```python
++# test_models.py
++from pydantic2_to_typescript import generate_typescript_defs
++
++generate_typescript_defs("your_module", "output.ts")
++```
++```bash
++# Run validation
++poetry run python test_models.py
++```
++
++If issues persist, consider explicitly specifying the repository:
++```toml
++# pyproject.toml
++[[tool.poetry.source]]
++name = "pypi"
++url = "https://pypi.org/simple"
++priority = "primary"
++```
++
++Remember to match the pydantic2ts version with your Pydantic version:
++- Pydantic v1: Use `pydantic-to-typescript<2`
++- Pydantic v2: Use `pydantic2-to-typescript`[2][3]
+diff --git a/cline/pydantic2s_fix_rec_2.md b/cline/pydantic2s_fix_rec_2.md
+new file mode 100644
+index 0000000..c276f86
+--- /dev/null
++++ b/cline/pydantic2s_fix_rec_2.md
+@@ -0,0 +1,88 @@
++Here's a step-by-step recommendation to resolve the dependency chain and generation issues:
++
++### 1. Environment Path Fix (Critical)
++**Modify your `generate_types.sh` script** to explicitly use the Poetry environment from the backend directory:
++```bash
++#!/bin/bash
++# Add these lines at the top
++export POETRY_BIN="$HOME/.local/bin/poetry"
++export PYTHONPATH="$PWD/../backend/src:$PYTHONPATH"
++
++# Modify your generation command to use
++cd ../backend && $POETRY_BIN run python -c "from pydantic2_to_typescript import generate_typescript_defs; generate_typescript_defs('your_module', '../frontend/src/types/models.ts')"
++```
++
++### 2. Dependency Resolution
++```bash
++# First clean existing installations
++poetry cache clear pydantic2-to-typescript --all
++rm -rf backend/venv  # Remove existing virtualenv
++
++# Reinstall with explicit build isolation
++cd backend
++poetry install --no-cache --remove-untracked
++```
++
++### 3. Node.js Requirements Verification
++```bash
++# Verify global npm installation
++npm list -g json-schema-to-typescript || npm install -g json-schema-to-typescript
++
++# Ensure PATH contains npm global bin directory
++export PATH="$HOME/.npm-global/bin:$PATH"
++```
++
++### 4. Cross-Platform Workaround
++For macOS-specific SSL issues, add this to `pyproject.toml`:
++```toml
++[tool.poetry.dependencies]
++python = "^3.9"
++pydantic2-to-typescript = {version = "^0.0.1", extras = ["cli"]}
++
++[build-system]
++requires = ["poetry-core>=1.0.0", "setuptools<=66.1.1"]  # Force compatible setuptools
++```
++
++### 5. Validation Test
++Create a test script `backend/scripts/validate_types.py`:
++```python
++from pydantic2_to_typescript import generate_typescript_defs
++from my_app import models  # Your actual model module
++
++generate_typescript_defs(models.__name__, "../frontend/src/types/models.ts")
++```
++Run with:
++```bash
++poetry run python scripts/validate_types.py
++```
++
++### Common Pitfall Solutions
++
++**If still seeing "ModuleNotFound":**
++```bash
++# Check Python path resolution
++poetry run python -c "import sys; print(sys.path)"
++
++# Force rebuild of environment
++poetry env remove python
++poetry install --sync
++```
++
++**If npm script permissions fail:**
++```bash
++chmod +x frontend/scripts/generate_types.sh
++```
++
++This approach addresses the key issues:
++1. Path resolution between frontend/backend directories
++2. Poetry environment isolation conflicts
++3. Python/Node.js dependency chain integration
++4. macOS-specific SSL/pipe issues
++
++The error about pip version 23.2.1 can be safely ignored for now, but you can update it with:
++```bash
++poetry run pip install --upgrade pip
++```
++
++---
++Answer from Perplexity: pplx.ai/share
+\ No newline at end of file
+diff --git a/cline/python_best_practices.md b/cline/python_best_practices.md
+new file mode 100644
+index 0000000..ff8345a
+--- /dev/null
++++ b/cline/python_best_practices.md
+@@ -0,0 +1,106 @@
++Here's a comprehensive guide for setting up `my-app` with Poetry and VSCode:
++
++## Project Structure & Poetry Configuration
++```
++my-app/
++├── backend/
++│   ├── pyproject.toml
++│   ├── src/
++│   │   └── my_app/
++│   │       ├── __init__.py
++│   │       └── ...
++│   ├── tests/
++│   └── README.md
++└── .vscode/
++    └── settings.json
++```
++
++**1. Initialize Poetry Project:**
++```bash
++mkdir -p my-app/backend && cd my-app/backend
++poetry init --name my-app --python "^3.9"
++```
++
++**2. Configure pyproject.toml:**
++```toml
++[tool.poetry]
++name = "my-app"
++version = "0.1.0"
++description = "My application backend"
++authors = ["Your Name "]
++packages = [{include = "my_app", from = "src"}]
++
++[tool.poetry.dependencies]
++python = "^3.9"
++# Add dependencies here
++
++[build-system]
++requires = ["poetry-core>=1.0.0"]
++build-backend = "poetry.core.masonry.api"
++```
++
++**3. Key Commands:**
++```bash
++# Install dependencies
++poetry add package-name
++
++# Activate virtual environment
++poetry shell
++
++# Install project in editable mode
++poetry install
++```
++
++## VSCode Configuration
++Create `.vscode/settings.json` in project root:
++
++```json
++{
++  "python.analysis.extraPaths": ["backend/src"],
++  "python.testing.pytestArgs": ["backend/tests"],
++  "python.testing.unittestEnabled": false,
++  "python.testing.pytestEnabled": true,
++  "python.terminal.activateEnvironment": true,
++  "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/bin/python"
++}
++```
++
++**Recommended Extensions:**
++1. Python (Microsoft)
++2. Pylance
++3. Python Test Explorer
++
++## Best Practices
++1. **Virtual Environment Management:**
++   - Keep venv in project: `poetry config virtualenvs.in-project true`
++   - Regenerate interpreter path after dependency changes: `poetry env info --path`
++
++2. **Dependency Workflow:**
++   ```bash
++   # Add production dependency
++   poetry add requests
++
++   # Add development dependency
++   poetry add --group dev pytest
++
++   # Update lock file
++   poetry update
++   ```
++
++3. **Testing Setup:**
++   ```toml
++   [tool.poetry.group.test.dependencies]
++   pytest = "^7.4"
++   ```
++
++4. **Git Integration:**
++   - Commit `pyproject.toml` and `poetry.lock`
++   - Add to `.gitignore`:
++     ```
++     backend/.venv/
++     __pycache__/
++     *.pyc
++     ```
++
++This setup ensures proper package resolution[1][6], maintains isolated dependencies[3], and enables full IDE support[4][7]. The VSCode configuration automatically detects the Poetry virtual environment and provides intelligent code completion[5].
++
+diff --git a/cline/summary_of_changes.md b/cline/summary_of_changes.md
+new file mode 100644
+index 0000000..efb45ba
+--- /dev/null
++++ b/cline/summary_of_changes.md
+@@ -0,0 +1,77 @@
++# Summary of Changes to Implement Python Best Practices
++
++## Overview
++
++This document summarizes the changes made to the budget project to align it with the Python best practices outlined in `cline/python_best_practices.md`. The primary focus was on converting the project from a traditional pip/venv setup to Poetry for dependency management and improving the project structure.
++
++## Changes Made
++
++### 1. Poetry Implementation
++
++- **Added `pyproject.toml`**: Created a Poetry configuration file in the backend directory with:
++  - Proper package metadata
++  - Dependency specifications organized into groups (main, dev, tools)
++  - Correct package for TypeScript generation (pydantic2-to-typescript instead of non-existent pydantic2ts)
++  - Build system configuration
++  - Tool configurations for pytest and pyright
++
++- **Removed Dependency on `requirements.txt` and `setup.py`**: While these files are still present for backward compatibility, the project now primarily uses Poetry for dependency management.
++
++### 2. Project Structure Improvements
++
++- **Test Directory Reorganization**: 
++  - Moved tests from `backend/test/` to `backend/tests/` to follow Python conventions
++  - Ensured proper `__init__.py` files are in place
++
++- **VSCode Configuration**:
++  - Added `.vscode/settings.json` with appropriate Python settings
++  - Configured test discovery, interpreter path, and environment activation
++
++### 3. Build and Run Process Updates
++
++- **Updated Build Scripts**:
++  - Created `install_poetry.sh` script to handle Poetry installation with SSL certificate fixes for macOS
++  - Modified `run_project.sh` to use Poetry for dependency management
++  - Added automatic Poetry installation via the installation script
++  - Added validation to check for TypeScript type definitions and provide clear instructions if missing
++  - Updated virtual environment path from `venv` to `.venv`
++  - Changed commands to use `poetry run` prefix
++
++- **Updated Frontend Integration**:
++  - Created a dedicated `generate_types.sh` script in the frontend/scripts directory
++  - Modified the `generate-types` script in `package.json` to use the new script
++  - Added automatic Poetry installation and PATH configuration in the script
++  - Added robust installation of pydantic2-to-typescript with fallback methods and error handling
++  - Added installation of required npm package (json-schema-to-typescript)
++
++### 4. Git Configuration
++
++- **Enhanced `.gitignore`**:
++  - Added comprehensive patterns for Python, Poetry, Node.js, and IDE files
++  - Specifically excluded virtual environment directories and binaries (backend/venv/, backend/venv/bin/*)
++  - Excluded build artifacts and temporary files
++  - Preserved important VSCode configuration files
++
++## Benefits of These Changes
++
++1. **Improved Dependency Management**:
++   - Deterministic builds with Poetry's lock file
++   - Better dependency resolution and version management
++   - Clearer separation between production, development, and tool dependencies
++
++2. **Enhanced Developer Experience**:
++   - Better IDE integration with VSCode
++   - Simplified environment setup and activation
++   - Improved test discovery and execution
++
++3. **Project Structure Standardization**:
++   - Follows Python community conventions
++   - More maintainable and scalable structure
++   - Better organization of test files
++
++4. **Streamlined Workflow**:
++   - Single command to set up the environment
++   - Consistent dependency management across environments
++   - Simplified type generation process
++
++These changes make the project more maintainable, easier to set up for new developers, and aligned with modern Python development practices.
+diff --git a/frontend/package.json b/frontend/package.json
+index 4d7eda1..5fd74f1 100644
+--- a/frontend/package.json
++++ b/frontend/package.json
+@@ -19,7 +19,7 @@
+     "build": "react-scripts build",
+     "test": "react-scripts test",
+     "eject": "react-scripts eject",
+-    "generate-types": "cd ../backend && pydantic2ts --module budget.models --output ../frontend/src/types/apiTypes.ts"
++    "generate-types": "./scripts/generate_types.sh"
+   },
+   "eslintConfig": {
+     "extends": [
+diff --git a/frontend/scripts/generate_types.sh b/frontend/scripts/generate_types.sh
+new file mode 100755
+index 0000000..a2024c2
+--- /dev/null
++++ b/frontend/scripts/generate_types.sh
+@@ -0,0 +1,83 @@
++#!/bin/bash
++
++set -e
++
++SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
++PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
++
++# Set explicit Poetry bin path and Python path
++export POETRY_BIN="$HOME/.local/bin/poetry"
++export PYTHONPATH="$PROJECT_ROOT/backend/src:$PYTHONPATH"
++
++# Function to display colored output
++echo_colored() {
++  local color=$1
++  local message=$2
++  case $color in
++    "green") echo -e "\033[0;32m$message\033[0m" ;;
++    "blue") echo -e "\033[0;34m$message\033[0m" ;;
++    "yellow") echo -e "\033[0;33m$message\033[0m" ;;
++    "red") echo -e "\033[0;31m$message\033[0m" ;;
++    *) echo "$message" ;;
++  esac
++}
++
++# Ensure Poetry is installed
++if ! command -v poetry &> /dev/null; then
++  # Run the poetry installation script
++  source "$PROJECT_ROOT/scripts/install_poetry.sh"
++  
++  # Add Poetry to PATH for this session
++  export PATH="$HOME/.local/bin:$PATH"
++fi
++
++# Install json-schema-to-typescript if needed
++if ! npm list -g json-schema-to-typescript &> /dev/null; then
++  echo_colored "yellow" "Installing json-schema-to-typescript globally (required for pydantic2-to-typescript)..."
++  npm install -g json-schema-to-typescript
++fi
++
++# Ensure pydantic2-to-typescript is installed
++cd "$PROJECT_ROOT/backend"
++
++# Check if the package is already installed
++if ! poetry run pip list | grep -q "pydantic2-to-typescript"; then
++  echo_colored "yellow" "Installing pydantic2-to-typescript package..."
++  
++  # Try to install the package in the tools group
++  poetry add --group tools pydantic2-to-typescript || {
++    echo_colored "red" "Failed to install pydantic2-to-typescript using Poetry."
++    echo_colored "yellow" "Trying alternative installation method..."
++    
++    # Activate the Poetry environment and install directly with pip
++    poetry run pip install pydantic2-to-typescript
++  }
++fi
++
++# Verify the package is installed
++if ! poetry run pip list | grep -q "pydantic2-to-typescript"; then
++  echo_colored "red" "Failed to install pydantic2-to-typescript."
++  echo_colored "yellow" "Please install it manually with:"
++  echo_colored "blue" "cd $PROJECT_ROOT/backend && poetry run pip install pydantic2-to-typescript"
++  exit 1
++fi
++
++echo_colored "yellow" "Generating TypeScript types from Pydantic models..."
++cd "$PROJECT_ROOT/backend" && $POETRY_BIN run python -c "from pydantic2ts import generate_typescript_defs; generate_typescript_defs('budget.models', '../frontend/src/types/apiTypes.ts')"
++
++if [ $? -eq 0 ]; then
++  echo_colored "green" "TypeScript types generated successfully!"
++else
++  echo_colored "red" "Failed to generate TypeScript types."
++  echo_colored "yellow" "This could be due to missing dependencies or configuration issues."
++  echo_colored "yellow" "Please check that json-schema-to-typescript is installed globally:"
++  echo_colored "blue" "npm install -g json-schema-to-typescript"
++  
++  # Debug information
++  echo_colored "yellow" "Debugging information:"
++  echo_colored "blue" "Python path:"
++  $POETRY_BIN run python -c "import sys; print(sys.path)"
++  echo_colored "blue" "Installed packages:"
++  $POETRY_BIN run pip list | grep pydantic
++  exit 1
++fi
+diff --git a/frontend/src/types/apiTypes.ts b/frontend/src/types/apiTypes.ts
+new file mode 100644
+index 0000000..7ee5559
+--- /dev/null
++++ b/frontend/src/types/apiTypes.ts
+@@ -0,0 +1,56 @@
++/* tslint:disable */
++/* eslint-disable */
++/**
++/* This file was automatically generated from pydantic models by running pydantic2ts.
++/* Do not modify it by hand - just update the pydantic models and then re-run the script
++*/
++
++/**
++ * Example request model to demonstrate type generation.
++ */
++export interface ExampleRequest {
++  /**
++   * Name of the user
++   */
++  name: string;
++  /**
++   * Email address of the user
++   */
++  email?: string | null;
++  /**
++   * User preferences as key-value pairs
++   */
++  preferences?: {
++    [k: string]: string;
++  } | null;
++}
++/**
++ * Example response model to demonstrate type generation.
++ */
++export interface ExampleResponse {
++  /**
++   * Unique identifier for the created resource
++   */
++  id: string;
++  /**
++   * Name of the user
++   */
++  name: string;
++  /**
++   * Timestamp when the resource was created
++   */
++  created_at: string;
++  /**
++   * List of associated items
++   */
++  items?: string[];
++}
++/**
++ * Response model for the hello endpoint.
++ */
++export interface HelloResponse {
++  /**
++   * Greeting message from the API
++   */
++  message: string;
++}
+diff --git a/scripts/install_poetry.sh b/scripts/install_poetry.sh
+new file mode 100755
+index 0000000..786fba7
+--- /dev/null
++++ b/scripts/install_poetry.sh
+@@ -0,0 +1,90 @@
++#!/bin/bash
++
++# Function to display colored output
++echo_colored() {
++  local color=$1
++  local message=$2
++  case $color in
++    "green") echo -e "\033[0;32m$message\033[0m" ;;
++    "blue") echo -e "\033[0;34m$message\033[0m" ;;
++    "yellow") echo -e "\033[0;33m$message\033[0m" ;;
++    "red") echo -e "\033[0;31m$message\033[0m" ;;
++    *) echo "$message" ;;
++  esac
++}
++
++echo_colored "yellow" "Attempting to install Poetry..."
++
++# Check if we're on macOS
++if [[ "$OSTYPE" == "darwin"* ]]; then
++  echo_colored "blue" "Detected macOS system. Checking for SSL certificates..."
++  
++  # Check if certifi is installed
++  if ! python3 -c "import certifi" &> /dev/null; then
++    echo_colored "yellow" "Installing certifi package for SSL certificate verification..."
++    pip install certifi
++  fi
++  
++  # Create a temporary Python script to handle SSL certificate verification
++  TEMP_SCRIPT=$(mktemp)
++  cat > "$TEMP_SCRIPT" << 'EOF'
++import os
++import sys
++import subprocess
++import ssl
++import certifi
++
++# Use certifi's certificate bundle
++os.environ['SSL_CERT_FILE'] = certifi.where()
++os.environ['REQUESTS_CA_BUNDLE'] = certifi.where()
++
++# Run the Poetry installer
++result = subprocess.run(
++    ["curl", "-sSL", "https://install.python-poetry.org"],
++    capture_output=True,
++    text=True
++)
++
++if result.returncode != 0:
++    print(f"Failed to download Poetry installer: {result.stderr}", file=sys.stderr)
++    sys.exit(1)
++
++# Pipe the installer to Python
++install_process = subprocess.run(
++    [sys.executable, "-"],
++    input=result.stdout,
++    text=True
++)
++
++sys.exit(install_process.returncode)
++EOF
++  
++  # Run the temporary script
++  python3 "$TEMP_SCRIPT"
++  rm "$TEMP_SCRIPT"
++else
++  # Non-macOS systems can use the standard installation
++  curl -sSL https://install.python-poetry.org | python3 -
++fi
++
++# Add Poetry to PATH for this session
++export PATH="$HOME/.local/bin:$PATH"
++
++# Check if installation was successful
++if ! command -v poetry &> /dev/null; then
++  echo_colored "red" "Failed to install Poetry automatically."
++  echo_colored "red" "Please follow the manual installation instructions:"
++  
++  if [[ "$OSTYPE" == "darwin"* ]]; then
++    echo_colored "blue" "For macOS:"
++    echo_colored "blue" "1. Open Finder and navigate to /Applications/Python 3.x/"
++    echo_colored "blue" "2. Double-click on 'Install Certificates.command'"
++    echo_colored "blue" "3. Then run: curl -sSL https://install.python-poetry.org | python3 -"
++  else
++    echo_colored "blue" "curl -sSL https://install.python-poetry.org | python3 -"
++  fi
++  
++  exit 1
++else
++  echo_colored "green" "Poetry installed successfully!"
++fi
+diff --git a/scripts/run_project.sh b/scripts/run_project.sh
+index ecb67bf..43819c5 100755
+--- a/scripts/run_project.sh
++++ b/scripts/run_project.sh
+@@ -18,21 +18,25 @@ echo_colored() {
+   esac
+ }
+ 
+-# Setup Python environment if it doesn't exist
+-if [ ! -d "$PROJECT_ROOT/backend/venv" ]; then
+-  echo_colored "yellow" "Setting up Python virtual environment..."
++# Ensure Poetry is installed
++if ! command -v poetry &> /dev/null; then
++  # Run the poetry installation script
++  source "$SCRIPT_DIR/install_poetry.sh"
++  
++  # Add Poetry to PATH for this session
++  export PATH="$HOME/.local/bin:$PATH"
++fi
++
++# Setup Python environment with Poetry
++if [ ! -d "$PROJECT_ROOT/backend/.venv" ]; then
++  echo_colored "yellow" "Setting up Python virtual environment with Poetry..."
+   cd "$PROJECT_ROOT/backend"
+   
+-  # Try python3 first, then fall back to python if python3 is not available
+-  if command -v python3 &> /dev/null; then
+-    python3 -m venv venv
+-  else
+-    python -m venv venv
+-  fi
++  # Configure Poetry to create virtual environment in project directory
++  poetry config virtualenvs.in-project true --local
+   
+-  source venv/bin/activate
+-  pip install -e .
+-  pip install -r requirements.txt
++  # Install dependencies
++  poetry install
+   cd "$PROJECT_ROOT"
+ fi
+ 
+@@ -47,12 +51,22 @@ fi
+ # Ensure types directory exists
+ mkdir -p "$PROJECT_ROOT/frontend/src/types"
+ 
+-# Generate TypeScript types if they don't exist
++# Install json-schema-to-typescript if needed
++if ! npm list -g json-schema-to-typescript &> /dev/null; then
++  echo_colored "yellow" "Installing json-schema-to-typescript globally (required for pydantic2-to-typescript)..."
++  npm install -g json-schema-to-typescript
++fi
++
++# Check if TypeScript types exist
+ if [ ! -f "$PROJECT_ROOT/frontend/src/types/apiTypes.ts" ]; then
+-  echo_colored "yellow" "Generating TypeScript types from Pydantic models..."
+-  cd "$PROJECT_ROOT/frontend"
+-  npm run generate-types || echo_colored "yellow" "Type generation skipped. Run manually with 'npm run generate-types' after setup."
+-  cd "$PROJECT_ROOT"
++  echo_colored "red" "ERROR: TypeScript type definitions file not found!"
++  echo_colored "yellow" "You need to generate TypeScript types before running the application."
++  echo_colored "yellow" "Run the following command to generate types:"
++  echo_colored "blue" "cd $PROJECT_ROOT && ./frontend/scripts/generate_types.sh"
++  echo_colored "blue" "or"
++  echo_colored "blue" "cd $PROJECT_ROOT/frontend && npm run generate-types"
++  echo_colored "yellow" "Remember to run this command whenever you make changes to the API models."
++  exit 1
+ fi
+ 
+ echo_colored "green" "Starting budget application..."
+@@ -64,5 +78,5 @@ cd "$PROJECT_ROOT/frontend"
+   --prefix "[{name}]" \
+   --names "backend,frontend" \
+   --prefix-colors "yellow.bold,cyan.bold" \
+-  "cd $PROJECT_ROOT/backend && source venv/bin/activate && uvicorn budget.app:app --reload" \
++  "cd $PROJECT_ROOT/backend && poetry run uvicorn budget.app:app --reload" \
+   "npm start"
